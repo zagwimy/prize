@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>摇号系统</title>
+    <meta name="description" content="摇号系统">
+    <meta name="keywords" content="摇号系统">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/elementui/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style type="text/css">
+    .el-main{
+        position: absolute;
+        top: 70px;
+        bottom: 0px;
+        left: 200px;
+        right: 10px;
+        padding: 0;
+    }
+    .startRoll{
+        margin-top: 100px;
+        height: 100px;
+        width: 200px;
+        alignment-baseline: center;
+        text-align: center;
+    }
+    </style>
+</head>
+<body>
+    <div id="app" style="width: 100%;text-align: center">
+        <div class="content-header" >
+
+        </div>
+
+            <el-button type="primary" class="startRoll" @click="startRoll()">开始摇号</el-button><br><br><br><br>
+            <el-button type="primary" @click="namelistSetting()">名单设置</el-button><br>
+            <el-button type="primary" @click="goHistory()" style="margin-top: 5px">查看历史</el-button><br>
+
+    </div>
+</body>
+<!-- 引入组件库 -->
+<script src="../js/vue.js"></script>
+<script src="../plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script src="../js/axios-0.18.0.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            username: ''//当前登录用户的用户名
+        },
+        created(){
+            //发送ajax请求，请求Controller获取当前登录用户的用户名，展示到页面中
+            axios.get("/user/getUsername.do").then((res) => {
+                if(res.data.flag){
+                    this.username = res.data.data;
+                }
+            });
+        },
+        methods:{
+            namelistSetting(){
+                window.location.href = "/prizeOnline/pages/ordersetting.html"
+            },
+            startRoll(){
+                window.location.href = "/prizeOnline/pages/roll.html"
+            },
+            goHistory(){
+                window.location.href = "/prizeOnline/pages/history.html"
+            }
+        }
+    });
+    $(function() {
+            var wd = 200;
+            $(".el-main").css('width', $('body').width() - wd + 'px');
+    });
+</script>
+</html>

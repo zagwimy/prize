@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>摇号系统</title>
+    <meta name="description" content="摇号系统">
+    <meta name="keywords" content="摇号系统">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <script>
+        function getUrlParam(paraName) {
+            var url = document.location.toString();
+            //alert(url);
+            var arrObj = url.split("?");
+            if (arrObj.length > 1) {
+                var arrPara = arrObj[1].split("&");
+                var arr;
+                for (var i = 0; i < arrPara.length; i++) {
+                    arr = arrPara[i].split("=");
+                    if (arr != null && arr[0] == paraName) {
+                        return arr[1];
+                    }
+                }
+                return "";
+            }
+            else {
+                return "";
+            }
+        }
+        var version = getUrlParam("version");
+    </script>
+</head>
+<body class="hold-transition">
+<div id="app">
+    <div class="app-container" v-loading.fullscreen.lock="fullscreenLoading"
+         style="height:768px;width:100%;background-image: url('/prizeOnline/img/red_happy.jpg');background-repeat:no-repeat;background-size:100% 100%;">
+        <div class="content-header" style="background-color: white;width: 90px">
+            <h1><a type="primary" href="/prizeOnline/pages/main.html">首页</a><small>摇号<span v-if="flag">.</span></small>
+            </h1>
+        </div>
+        <div style="color: yellow;font-size: 30px;margin-top: 50px;text-align: center">
+            <span v-if="already >0">已经摇号（{{already * 30}}/300）</span>
+            <span v-else>准备第1轮摇号</span>
+        </div>
+        <div style="margin: auto">
+            <table style="margin-left:auto;margin-right:auto;color: white;font-weight: bold;font-size: 40px;margin-top: 50px;text-align: center;width: 80%">
+                <tr v-for="(rnumber,rindex) in numbers.length/5">
+                    <td v-for="(number,index) in numbers.slice(rindex*5,rindex*5+5)">{{number}}</td>
+                </tr>
+            </table>
+        </div>
+        <div style="text-align: center">
+            <el-button
+                    v-if="!isRolling && already!=10"
+                    type="primary"
+                    style="margin-top: 180px;height: 50px;width: 150px"
+                    @click="startRoll()"
+            >开始摇号
+            </el-button>
+            <el-button
+                    v-if="isRolling && already!=10"
+                    type="primary"
+                    style="margin-top: 180px;height: 50px;width: 150px"
+                    @click="stopRoll()"
+            >结束摇号
+            </el-button>
+            <el-button
+                    v-if="already>=10"
+                    type="primary"
+                    style="margin-top: 180px;height: 50px;width: 300px"
+                    @click="goToResultPage()"
+            >摇号完毕，查看最终结果
+            </el-button>
+        </div>
+    </div>
+</div>
+</body>
+<!-- 引入样式 -->
+<link rel="stylesheet" href="../plugins/elementui/index.css">
+<link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/orderset.css">
+<!-- 引入组件库 -->
+<script src="../js/vue.js"></script>
+<script src="../plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script src="../js/axios-0.18.0.js"></script>
+<script type="text/javascript">
+    var vue = new Vue({
+        el: '#app',
+        data: {
+            fullscreenLoading: false,
+            isRolling: false,
+            already: 0,
+            numbers:
+                ["****", "****", "****", "****", "****", "****",
+                    "****", "****", "****", "****", "****", "****",
+                    "****", "****", "****", "****", "****", "****",
+                    "****", "****", "****", "****", "****", "****",
+                    "****", "****", "****", "****", "****", "****"],
+            allNumbers: [],
+            allResults: [],
+            intervalId: null,
+            rollResult: {},
+            result4Show: [],
+            flag: false,
+            isBegin:false
+        },
+        create() {
+
+        },
+        mounted() {
+            document.onkeydown = (e) => {
+                // alert(window.event.keyCode)
+                if (window.event.keyCode == 67 && !this.isBegin) {
+                    this.flag = !this.flag;
+                }
+            }
+            this.fullscreenLoading = true;
+            if(version){
+                axios.post("/prizeOnline/namelist/findHistoryBackup.do?version="+version).then((res) => {
+                    Object.assign(this.$data,JSON.parse(res.data))
+                }).finally(()=>{
+                    this.fullscreenLoading = false;
+                });
+            }else{
+                axios.post("/prizeOnline/namelist/getRollResult.do").then((res) => {
+                    if (res.data.flag) {
+                        // 抽取成功
+                        this.rollResult = res.data.data;
+                        this.allNumbers = this.rollResult.allNumbers;
+                        this.allResults = [];
+                        for (i = 0;i<this.rollResult.randomResult.length;i++) {
+                            this.allResults.push(this.rollResult.randomResult[i].number);
+                        }
+                    } else {
+                        this.$message.error("服务器出错了，请刷新重试");
+                    }
+                }).finally(()=>{
+                    this.fullscreenLoading = false;
+                });
+            }
+        },
+        methods: {
+            startRoll() {
+                this.isBegin = true;
+                this.isRolling = true;
+                this.intervalId = setInterval(() => {
+                    this.randomNumbers();
+                }, 200);
+            },
+            stopRoll() {
+
+                clearInterval(this.intervalId);
+                if (this.flag && this.allResults && this.allResults.length > 0) {
+                    if (this.allResults.length >= (this.already * 30 + 30)){
+                        this.numbers = this.allResults.slice(this.already * 30, this.already * 30 + 30);
+                    }
+                }
+                this.result4Show = this.result4Show.concat(this.numbers);
+                // 已选中的从待选集合去除
+                var temAllArr = new Array();
+                for (var i = 0; i < this.allNumbers.length; i++){
+                    var isHave = false;
+                    for(var j = 0; j < this.numbers.length; j++){
+                        if (this.numbers[j] == this.allNumbers[i]){
+                            isHave = true;
+                            break;
+                        }
+                    }
+                    if (!isHave){
+                        temAllArr.push(this.allNumbers[i]);
+                    }
+                }
+                this.allNumbers = temAllArr;
+
+                this.already++;
+                this.isRolling = false;
+                axios.get("/prizeOnline/namelist/pickStudents.do?version="+this.rollResult.version+"&pickedNumbers="+this.numbers+"&batch="+this.already)
+                     .then((res)=>{
+                             console.log(res.data.message);
+                     });
+                // console.log(this.$data)
+                axios.post("/prizeOnline/namelist/saveHistoryBackup.do?version="+this.rollResult.version,this.$data).then((res)=>{
+                    console.log(res.data.message);
+                });
+
+            },
+            randomNumbers() {
+                let temArr = new Array();
+                // for (i = 0; i < 30; i++) {
+                //     let idx = Math.floor(Math.random() * this.allNumbers.length);
+                //     temArr.push(this.allNumbers[idx]);
+                // }
+                while(temArr.length < 30){
+                    let idx = Math.floor(Math.random() * this.allNumbers.length);
+                    temArr.push(this.allNumbers[idx]);
+
+                    //随机数去重复并且补数
+                    for (var i = 0; i < temArr.length; i++){
+                        for(var j = i+1; j < temArr.length; j++){
+                            if (temArr[j] == temArr[i]){
+                                temArr.splice(j, 1);
+                            }
+                        }
+                    }
+                }
+
+                this.numbers = temArr;
+            },
+            goToResultPage() {
+                window.location.href = "/prizeOnline/pages/historyDetail.html?version=" + this.rollResult.version;
+            }
+        }
+    });
+</script>
+</html>

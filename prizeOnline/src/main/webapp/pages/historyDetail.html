@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>摇号系统</title>
+    <meta name="description" content="摇号系统">
+    <meta name="keywords" content="摇号系统">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/elementui/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/orderset.css">
+    <!-- 引入组件库 -->
+    <script src="../js/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+    <script>
+        function getUrlParam(paraName) {
+            var url = document.location.toString();
+            //alert(url);
+            var arrObj = url.split("?");
+            if (arrObj.length > 1) {
+                var arrPara = arrObj[1].split("&");
+                var arr;
+                for (var i = 0; i < arrPara.length; i++) {
+                    arr = arrPara[i].split("=");
+                    if (arr != null && arr[0] == paraName) {
+                        return arr[1];
+                    }
+                }
+                return "";
+            } else {
+                return "";
+            }
+        }
+
+        var version = getUrlParam("version");
+    </script>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1><a type="primary" href="/prizeOnline/pages/main.html">首页</a><small>摇号结果</small></h1>
+        <div class="boxMain">
+            <el-button style="margin-bottom: 20px;margin-right: 20px;float: right   " type="primary"
+                       @click="exportExcel()">导出Excel
+            </el-button>
+        </div>
+    </div>
+    <el-container v-loading.fullscreen.lock="fullscreenLoading">
+        <el-table style="width: 100%" current-row-key="id" :data="histories" stripe highlight-current-row>
+            <el-table-column type="index" align="center" label="序号"></el-table-column>
+            <el-table-column prop="number" label="编号" align="center"></el-table-column>
+            <el-table-column prop="name" label="姓名" align="center"></el-table-column>
+            <el-table-column prop="batch" label="第几轮中签" align="center"></el-table-column>
+            <el-table-column prop="insertTime" label="中签时间" align="center"></el-table-column>
+        </el-table>
+    </el-container>
+</div>
+</body>
+<!-- 引入组件库 -->
+<script src="../js/vue.js"></script>
+<script src="../plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            histories: [],
+            fullscreenLoading: false
+        },
+        created: function () {//在vue初始化时调用
+            this.fullscreenLoading = true;
+            axios.get("/prizeOnline/namelist/findHistoryByVersion.do?version=" + version).then((res) => {
+                if (res.data.flag) {
+                    this.histories = res.data.data;
+                    this.$message({
+                        message: res.data.message,
+                        type: 'success'
+                    });
+                } else {
+                    this.$message.error(res.data.message);
+                }
+            }).finally(() => {
+                this.fullscreenLoading = false;
+            });
+        },
+        methods: {
+            exportExcel() {
+                window.location.href ="/prizeOnline/namelist/exportExcel.do?version=" + version;
+            }
+        }
+    })
+</script>
+</html>
