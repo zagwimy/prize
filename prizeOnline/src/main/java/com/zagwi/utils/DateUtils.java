@@ -287,8 +287,8 @@ public class DateUtils {
 
     public static void main(String[] args) {
         try {
-            System.out.println("本周一" + parseDate2String(getThisWeekMonday()));
-            System.out.println("本月一日" + parseDate2String(getFirstDay4ThisMonth()));
+            // System.out.println("本周一" + parseDate2String(getThisWeekMonday()));
+            // System.out.println("本月一日" + parseDate2String(getFirstDay4ThisMonth()));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -37,13 +37,18 @@ public class NameListController {
             List<String[]> list = POIUtils.readExcel(excelFile);//使用POI解析表格数据
             List<Student> data = new ArrayList<>();
             for (String[] strings : list) {
+
                 String number = strings[0];
                 String name = strings[1];
-                String remark = strings[2];
+
                 Student s = new Student();
                 s.setName(name);
                 s.setNumber(number);
-                s.setRemark(remark);
+                if(strings.length > 2){
+                    String remark = strings[2];
+                    s.setRemark(remark);
+                }
+
                 data.add(s);
             }
             List<Student> students = studentService.add(data);
@@ -172,10 +177,7 @@ public class NameListController {
                 row.createCell(2).setCellValue(histories.get(i).getBatch()+"");
                 row.createCell(3).setCellValue(sdf.format(histories.get(i).getInsertTime()));
             }
-
-
-
-
+            
             //使用输出流进行表格下载,基于浏览器作为客户端下载
             OutputStream out = response.getOutputStream();
             response.setContentType("application/vnd.ms-excel");//代表的是Excel文件类型
@@ -190,5 +192,7 @@ public class NameListController {
         }
     }
 
-
+    public static void main(String[] args) {
+        // System.out.println(System.getProperty("user.dir"));
+    }
 }

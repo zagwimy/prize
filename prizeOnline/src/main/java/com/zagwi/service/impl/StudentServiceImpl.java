@@ -24,6 +24,7 @@ public class StudentServiceImpl implements StudentService {
 //        for (Student student : data) {
 //            studentDao.add(student);
 //        }
+        studentDao.deleteStudentList();
         studentDao.addBatch(data);
         return studentDao.findAll();
     }
@@ -41,22 +42,22 @@ public class StudentServiceImpl implements StudentService {
         result.setAllNumbers(studentDao.findAllNumbers());
         List<Student> whitelist = studentDao.findWhitelist();
         pickedStudents.addAll(whitelist);
-        System.out.println("白名单列表："+whitelist);
+        // System.out.println("白名单列表："+whitelist);
         remaining -= whitelist.size();
-        System.out.println("剩余"+remaining+"人从待定列表中抽取...");
+        // System.out.println("剩余"+remaining+"人从待定列表中抽取...");
         // 获取待定列表
         List<Student> undetermined = studentDao.findUndetermined();
-        System.out.println("待定列表："+undetermined);
+        // System.out.println("待定列表："+undetermined);
         //从待定列表补齐剩余人员
         Random random = new Random();
         while (remaining-- > 0){
             int index = random.nextInt(undetermined.size());
             //抽取一个待定学生
             Student remove = undetermined.remove(index);
-            System.out.println("从待定列表中抽取学生："+remove+",还剩余"+remaining+"人从待定列表中抽取...");
+            // System.out.println("从待定列表中抽取学生："+remove+",还剩余"+remaining+"人从待定列表中抽取...");
             pickedStudents.add(remove);
         }
-        System.out.println("抽取完成，共抽取学生"+pickedStudents.size()+"人："+pickedStudents);
+        // System.out.println("抽取完成，共抽取学生"+pickedStudents.size()+"人："+pickedStudents);
         // 抽取完成，将学生存入临时表中
         int version = studentDao.getMaxVersion() + 1;
         List<History> historiesForInsert = new ArrayList<>();
@@ -71,10 +72,10 @@ public class StudentServiceImpl implements StudentService {
         studentDao.insertHistoryBatchMode(historiesForInsert);
         List<History> historyByVersion = studentDao.findHistoryByVersion(version);
         // 最终抽取学生的列表洗牌前
-        System.out.println("最终抽取学生的列表洗牌前:" + historyByVersion);
+        // System.out.println("最终抽取学生的列表洗牌前:" + historyByVersion);
         Collections.shuffle(historyByVersion);
         // 最终抽取学生的列表洗牌后
-        System.out.println("最终抽取学生的列表洗牌后:" + historyByVersion);
+        // System.out.println("最终抽取学生的列表洗牌后:" + historyByVersion);
         result.setRandomResult(historyByVersion);
         result.setVersion(version);
         return result;
