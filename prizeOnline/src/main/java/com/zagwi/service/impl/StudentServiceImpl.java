@@ -41,21 +41,47 @@ public class StudentServiceImpl implements StudentService {
         RollResult result = new RollResult();
         result.setAllNumbers(studentDao.findAllNumbers());
         List<Student> whitelist = studentDao.findWhitelist();
-        pickedStudents.addAll(whitelist);
+        List<Student> all = studentDao.findAll();
+        List<Student> white = new ArrayList<>();
+        for (Student xxx : all){
+            for( Student www :whitelist){
+                if(xxx.getName().equals(www.getName())){
+                    white.add(xxx);
+                }
+            }
+        }
+
+        pickedStudents.addAll(white);
         // System.out.println("白名单列表："+whitelist);
-        remaining -= whitelist.size();
+        remaining -= white.size();
         // System.out.println("剩余"+remaining+"人从待定列表中抽取...");
         // 获取待定列表
-        List<Student> undetermined = studentDao.findUndetermined();
+        List<Student> undetermined = new ArrayList<>();
+        for(Student xxx : all) {
+            boolean flg1 = false;
+            for (Student sss : whitelist){
+
+                if (sss.getName().equals(xxx.getName())) {
+                    flg1 = true;
+                    break;
+                }
+            }
+            if(!flg1){
+                undetermined.add(xxx);
+            }
+        }
+
         // System.out.println("待定列表："+undetermined);
         //从待定列表补齐剩余人员
-        Random random = new Random();
-        while (remaining-- > 0){
-            int index = random.nextInt(undetermined.size());
-            //抽取一个待定学生
-            Student remove = undetermined.remove(index);
-            // System.out.println("从待定列表中抽取学生："+remove+",还剩余"+remaining+"人从待定列表中抽取...");
-            pickedStudents.add(remove);
+        if (undetermined != null && undetermined.size() != 0) {
+            Random random = new Random();
+            while (remaining-- > 0) {
+                int index = random.nextInt(undetermined.size());
+                //抽取一个待定学生
+                Student remove = undetermined.remove(index);
+                // System.out.println("从待定列表中抽取学生："+remove+",还剩余"+remaining+"人从待定列表中抽取...");
+                pickedStudents.add(remove);
+            }
         }
         // System.out.println("抽取完成，共抽取学生"+pickedStudents.size()+"人："+pickedStudents);
         // 抽取完成，将学生存入临时表中
@@ -83,7 +109,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public void pickStudents(int version, String[] pickedNumbers, int batch) {
-        if(pickedNumbers == null || pickedNumbers.length ==0){
+        if (pickedNumbers == null || pickedNumbers.length == 0) {
             return;
         }
         List<History> historyByVersion = studentDao.findHistoryByVersion(version);
@@ -93,14 +119,14 @@ public class StudentServiceImpl implements StudentService {
         for (String pickedNumber : pickedNumbers) {
             boolean flag = false;
             for (History history : historyByVersion) {
-                if(StringUtils.equals(pickedNumber,history.getNumber())){
+                if (StringUtils.equals(pickedNumber, history.getNumber())) {
                     flag = true;
                     break;
                 }
             }
-            if(flag){// 库中存在，更新
+            if (flag) {// 库中存在，更新
                 numbersForUpdate.add(pickedNumber);
-            }else{
+            } else {
 
                 History history = new History();
                 history.setNumber(pickedNumber);
@@ -109,10 +135,10 @@ public class StudentServiceImpl implements StudentService {
                 historiesForInsert.add(history);
             }
         }
-        if(numbersForUpdate.size() >0) {
+        if (numbersForUpdate.size() > 0) {
             studentDao.updateHistory(version, numbersForUpdate.toArray(new String[numbersForUpdate.size()]), batch);
         }
-        if(historiesForInsert.size() > 0){
+        if (historiesForInsert.size() > 0) {
             studentDao.insertHistoryBatchMode(historiesForInsert);
         }
     }
@@ -124,7 +150,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public void saveHistoryBackup(String historyBackup, int version) {
-        studentDao.saveHistoryBackup(historyBackup,version);
+        studentDao.saveHistoryBackup(historyBackup, version);
     }
 
     @Override

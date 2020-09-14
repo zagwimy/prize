@@ -17,7 +17,7 @@ public interface StudentDao {
     @Select("select number from student")
     List<String> findAllNumbers();
 
-    @Select("select * from student where name in (select name from whitelist)")
+    @Select("select * from whitelist")
     List<Student> findWhitelist();
 
     @Select("select * from student where name not in (select name from blacklist union select name from whitelist)")
